@@ -1,0 +1,116 @@
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>TherapyBubble :]</title>
+        
+        <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+        <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+
+        <style>
+            body {
+                background-color: rgb(245, 245, 220);
+            }
+            #speak-btn {
+                background-color: rgb(84, 131, 65);
+                width: 10cm;
+                height: 10cm;
+                border-radius: 50cm;
+                border: none;
+            }
+            #speak-btn-icon {
+                width: 2.5cm;   
+                height: 2.5cm;
+            }
+            #speak-btn-div {
+                margin: 0;
+                position: absolute;
+                top: 57%;
+                left: 50%;
+                -ms-transform: translate(-50%, -50%);
+                transform: translate(-50%, -50%);
+            }
+            #speak-btn-icon {
+                color: antiquewhite;
+            }
+            #speak-btn-icon:hover {
+                color: rgb(249, 251, 253);
+            }
+            h1 {
+                font-family: "Lucida Console";
+                font-weight: bolder;
+                margin-left: 36%;
+                font-size: 1cm;
+                color: rgb(43, 65, 34);
+            }
+            p {
+                font-family: "Lucida Console";
+                margin-left: 37.5%;
+                font-size: 0.4cm;
+                color: rgb(43, 65, 34);
+            }
+            #starting-con {
+                margin-top: 3cm;
+                margin-left: 2cm;
+            }
+        </style>
+    </head>
+    <body>
+        <div id="starting-con">
+            <h1>TherapyBubble</h1>
+            <p>Click here to speak to the AI</p>
+        </div>
+        <div id="speak-btn-div">
+            <button id="speak-btn" onclick="startListening()"><ion-icon name="mic-outline" id="speak-btn-icon"></ion-icon></button>
+        </div>
+        <script>
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (!SpeechRecognition) {
+                console.log("Not Suported Bhai!");
+            }
+            else {
+                const recognition = new SpeechRecognition();
+                recognition.lang = 'en-us';
+                recognition.interimResults = false;
+                recognition.maxAlternatives = 1;
+                recognition.onresult = async (event) => {
+                    const transcript = event.results[0][0].transcript.toLowerCase().trim();
+                    try {
+                        const response = await fetch('/chat', {
+                            method:'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({ message: transcript })
+                        });
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! status: ${response.status}`);
+                        }
+                        const data = await response.json();
+                        const aiMessage = data.ai_response;
+                        speak(aiMessage)
+                    } catch (error) {
+                        console.error('Error:', error);
+                        result.textContent = 'Error: Could not get a response from the AI.';
+                    }
+                };
+                recognition.onerror = (event) => {
+                    console.log('Error: ' + event.error);
+                };
+                function startListening() {
+                    console.log("Listening...");
+                    recognition.start();
+                }
+                window.startListening = startListening;
+            }
+            function speak(text) {
+                let speech = new SpeechSynthesisUtterance(text);
+                speech.lang = "en-US";
+                speech.pitch = 1;
+                speech.rate = 1;
+                window.speechSynthesis.speak(speech);
+            }
+        </script>
+    </body>
+    </html>
